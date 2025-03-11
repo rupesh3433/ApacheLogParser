@@ -21,34 +21,26 @@ function App() {
   const fileInputRef = useRef(null);
 
   // Use Vite's env variables (must be prefixed with VITE_)
-  // We now use VITE_API_BASE_URL to control your backend endpoints
   const rawApiUrl = import.meta.env.VITE_API_BASE_URL;
-  const API_UPLOAD_URL =
-    rawApiUrl && rawApiUrl.trim() !== "" && rawApiUrl.toLowerCase() !== "undefined"
-      ? `${rawApiUrl}/upload`
-      : "http://127.0.0.1:5000/upload";
-  const API_DOWNLOAD_BASE =
-    rawApiUrl && rawApiUrl.trim() !== "" && rawApiUrl.toLowerCase() !== "undefined"
-      ? `${rawApiUrl}/download`
-      : "http://127.0.0.1:5000/download";
+  const API_UPLOAD_URL = `${rawApiUrl}/upload`;
+  const API_DOWNLOAD_BASE = `${rawApiUrl}/download`;
 
   useEffect(() => {
     console.log("API_UPLOAD_URL:", API_UPLOAD_URL);
     console.log("API_DOWNLOAD_BASE:", API_DOWNLOAD_BASE);
   }, [API_UPLOAD_URL, API_DOWNLOAD_BASE]);
 
-  // Helper to check if file extension is valid
+  // Helper to check if file extension is valid (only accepts .log files)
   const isValidFileType = (file) => {
-    const allowedExtensions = [".log", ".txt"];
     const fileName = file.name.toLowerCase();
-    return allowedExtensions.some((ext) => fileName.endsWith(ext));
+    return fileName.endsWith(".log");
   };
 
   const handleFileChange = (event) => {
     const selectedFile = event.target.files[0];
     if (selectedFile) {
       if (!isValidFileType(selectedFile)) {
-        setError("Invalid file type. Please select a .log or .txt file.");
+        setError("Invalid file type. Please select a .log file.");
         setFile(null);
         return;
       }
@@ -64,7 +56,7 @@ function App() {
     const droppedFile = e.dataTransfer.files[0];
     if (droppedFile) {
       if (!isValidFileType(droppedFile)) {
-        setError("Invalid file type. Please drop a .log or .txt file.");
+        setError("Invalid file type. Please drop a .log file.");
         setFile(null);
         return;
       }
@@ -88,9 +80,10 @@ function App() {
     setIsDragging(false);
   };
 
+  // Updated handleUpload using responseType: "blob" to handle file download
   const handleUpload = async () => {
     if (!file) {
-      setError("Please select a .log or .txt file");
+      setError("Please select a .log file");
       return;
     }
 
@@ -104,9 +97,12 @@ function App() {
     try {
       const response = await axios.post(API_UPLOAD_URL, formData, {
         headers: { "Content-Type": "multipart/form-data" },
+        responseType: "blob", // Handle response as a file blob
       });
-      // Expecting response.data.csv_file as the unique CSV file identifier
-      setDownloadLink(response.data.csv_file);
+
+      // Create a temporary URL for the blob response
+      const blobUrl = window.URL.createObjectURL(new Blob([response.data], { type: "text/csv" }));
+      setDownloadLink(blobUrl);
       setUploadSuccess(true);
       setActiveTab("download");
     } catch (err) {
@@ -234,7 +230,7 @@ function App() {
                     Upload Apache Log File
                   </CardTitle>
                   <CardDescription>
-                    Select or drag and drop your <strong>.log</strong> or <strong>.txt</strong> file for processing.
+                    Select or drag and drop your <strong>.log</strong> file for processing.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -266,7 +262,7 @@ function App() {
                       <FileText size={48} className="text-slate-400" />
                       <div>
                         <p className="font-medium text-slate-700">
-                          {file ? file.name : "Drag and drop your .log or .txt file here"}
+                          {file ? file.name : "Drag and drop your .log file here"}
                         </p>
                         <p className="text-sm text-slate-500 mt-1">
                           {file 
@@ -281,7 +277,7 @@ function App() {
                         <input
                           ref={fileInputRef}
                           type="file"
-                          accept=".log,.txt"
+                          accept=".log"
                           onChange={handleFileChange}
                           className="hidden"
                         />
@@ -338,7 +334,7 @@ function App() {
                       </div>
                       
                       <a
-                        href={`${API_DOWNLOAD_BASE}/${downloadLink}`}
+                        href={downloadLink}
                         className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-all shadow-md hover:shadow-lg"
                         download
                       >
