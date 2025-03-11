@@ -15,12 +15,14 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [activeTab, setActiveTab] = useState("upload");
+  const [isDragging, setIsDragging] = useState(false);
 
   // Create a ref for the file input
   const fileInputRef = useRef(null);
 
   // Use Vite's env variables (must be prefixed with VITE_)
-  const rawApiUrl = import.meta.env.VITE_API_URL;
+  // We now use VITE_API_BASE_URL to control your backend endpoints
+  const rawApiUrl = import.meta.env.VITE_API_BASE_URL;
   const API_UPLOAD_URL =
     rawApiUrl && rawApiUrl.trim() !== "" && rawApiUrl.toLowerCase() !== "undefined"
       ? `${rawApiUrl}/upload`
@@ -58,6 +60,7 @@ function App() {
 
   const handleDrop = (e) => {
     e.preventDefault();
+    setIsDragging(false);
     const droppedFile = e.dataTransfer.files[0];
     if (droppedFile) {
       if (!isValidFileType(droppedFile)) {
@@ -73,6 +76,16 @@ function App() {
 
   const handleDragOver = (e) => {
     e.preventDefault();
+  };
+
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
   };
 
   const handleUpload = async () => {
@@ -92,6 +105,7 @@ function App() {
       const response = await axios.post(API_UPLOAD_URL, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+      // Expecting response.data.csv_file as the unique CSV file identifier
       setDownloadLink(response.data.csv_file);
       setUploadSuccess(true);
       setActiveTab("download");
@@ -151,7 +165,7 @@ function App() {
                     Input Log Format
                   </CardTitle>
                   <CardDescription>
-                    Your Apache log file should follow the Combined Log Format
+                    Your Apache log file should follow the Combined Log Format.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -175,7 +189,7 @@ function App() {
                     Output CSV Format
                   </CardTitle>
                   <CardDescription>
-                    The processed CSV file will contain these columns
+                    The processed CSV file will contain these columns.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -220,7 +234,7 @@ function App() {
                     Upload Apache Log File
                   </CardTitle>
                   <CardDescription>
-                    Select or drag and drop your <strong>.log</strong> or <strong>.txt</strong> file for processing
+                    Select or drag and drop your <strong>.log</strong> or <strong>.txt</strong> file for processing.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -242,8 +256,10 @@ function App() {
                   )}
                   
                   <div 
-                    className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors"
+                    className={`border-2 ${isDragging ? "border-blue-500" : "border-slate-300"} border-dashed rounded-lg p-6 text-center transition-colors`} 
                     onDragOver={handleDragOver}
+                    onDragEnter={handleDragEnter}
+                    onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
                   >
                     <div className="flex flex-col items-center space-y-4">
@@ -270,7 +286,7 @@ function App() {
                           className="hidden"
                         />
                         
-                        {/* Button that triggers the file input click */}
+                        {/* Button to open file dialog */}
                         <Button variant="outline" className="w-full" onClick={openFileDialog}>
                           Select File
                         </Button>
@@ -307,7 +323,7 @@ function App() {
                     Download Processed CSV
                   </CardTitle>
                   <CardDescription>
-                    Your log file has been processed and is ready for download
+                    Your log file has been processed and is ready for download.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col items-center py-10">
@@ -331,7 +347,8 @@ function App() {
                       </a>
                       
                       <p className="text-sm text-slate-500 mt-4">
-                        Need to process another file? <Button 
+                        Need to process another file?{" "}
+                        <Button 
                           variant="link" 
                           className="p-0 h-auto font-normal"
                           onClick={() => {
