@@ -1,6 +1,17 @@
 {
     "rewrites": [
-      { "source": "/(.*)", "destination": "/" }
+      {
+        "source": "/upload",
+        "destination": "https://apachelogparser-backend.onrender.com/upload"
+      },
+      {
+        "source": "/download",
+        "destination": "https://apachelogparser-backend.onrender.com/download"
+      },
+      {
+        "source": "/predict",
+        "destination": "https://apachelogparser-backend.onrender.com/predict"
+      }
     ]
   }
   

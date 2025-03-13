@@ -27,6 +27,7 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 // Maximum allowed file size (50MB)
+// (Note: Adjust MAX_FILE_SIZE if needed; current value is 5GB)
 const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024;
 
 function AnamolyDetector() {
@@ -53,12 +54,12 @@ function AnamolyDetector() {
     console.log("API_PREDICT_URL:", API_PREDICT_URL);
   }, [API_PREDICT_URL]);
 
-  // Cleanup blob URL on unmount (if used for any downloads)
+  // Debug: Log distributionData whenever it changes
   useEffect(() => {
-    return () => {
-      // Cleanup if needed
-    };
-  }, []);
+    if (distributionData) {
+      console.log("Distribution Data:", distributionData);
+    }
+  }, [distributionData]);
 
   // Update the file type validation to include Excel file extensions
   const isValidFileType = (file) => {
@@ -74,7 +75,7 @@ function AnamolyDetector() {
     const selectedFile = event.target.files[0];
     if (selectedFile) {
       if (!isValidFileType(selectedFile)) {
-        setError("Invalid file type. Please select a .csv file.");
+        setError("Invalid file type. Please select a .csv, .xls, or .xlsx file.");
         setFile(null);
         return;
       }
@@ -96,12 +97,12 @@ function AnamolyDetector() {
     const droppedFile = e.dataTransfer.files[0];
     if (droppedFile) {
       if (!isValidFileType(droppedFile)) {
-        setError("Invalid file type. Please drop a .csv file.");
+        setError("Invalid file type. Please drop a .csv, .xls, or .xlsx file.");
         setFile(null);
         return;
       }
       if (droppedFile.size > MAX_FILE_SIZE) {
-        setError("File size exceeds 5MB. Please upload a smaller file.");
+        setError("File size exceeds 50MB. Please upload a smaller file.");
         setFile(null);
         return;
       }
@@ -148,28 +149,28 @@ function AnamolyDetector() {
 
   const handleUpload = async () => {
     if (!file) {
-      setError("Please select a .csv file");
+      setError("Please select a valid file.");
       return;
     }
-  
+
     setError("");
     setIsLoading(true);
     setUploadSuccess(false);
-  
+
     const formData = new FormData();
     formData.append("file", file);
-  
+
     try {
       const response = await uploadFileWithRetry(formData);
-  
+
       // Handle empty CSV response
       if (response.data === "emptyCSV") {
         setError("The uploaded CSV file is empty. Please upload a valid dataset.");
         setIsLoading(false);
         return;
       }
-  
-      // Assuming the response contains JSON with totalRows, normalCount, maliciousCount
+
+      // Set distributionData directly from the backend response
       setDistributionData(response.data);
       setUploadSuccess(true);
       setActiveTab("results");
@@ -184,7 +185,6 @@ function AnamolyDetector() {
       setIsLoading(false);
     }
   };
-  
 
   const clearFile = () => {
     setFile(null);
@@ -210,8 +210,8 @@ function AnamolyDetector() {
         datasets: [
           {
             data: [
-              distributionData.normalCount,
-              distributionData.maliciousCount,
+              Number(distributionData.class_distribution.normalCount),
+              Number(distributionData.class_distribution.maliciousCount),
             ],
             backgroundColor: ["#36A2EB", "#FF6384"],
             hoverBackgroundColor: ["#36A2EB", "#FF6384"],
@@ -220,13 +220,13 @@ function AnamolyDetector() {
       }
     : null;
 
-  // Calculate percentages if distributionData exists
+  // Use the percentages directly from the backend response
   const normalPercentage = distributionData
-    ? ((distributionData.normalCount / distributionData.totalRows) * 100).toFixed(2)
-    : 0;
+    ? distributionData.class_distribution.normalPercent
+    : "0.00%";
   const maliciousPercentage = distributionData
-    ? ((distributionData.maliciousCount / distributionData.totalRows) * 100).toFixed(2)
-    : 0;
+    ? distributionData.class_distribution.maliciousPercent
+    : "0.00%";
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
@@ -284,7 +284,9 @@ function AnamolyDetector() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-gray-600">
-                    Please ensure your CSV file is properly formatted and under 50MB. This service is Highly Recommended to use After Parsing log file with our own Log Parser you can find in Dashboard.
+                    Please ensure your CSV file is properly formatted and under 50MB.
+                    This service is highly recommended to use after parsing the log file
+                    with our own Log Parser (available in the Dashboard).
                   </p>
                 </CardContent>
               </Card>
@@ -422,15 +424,15 @@ function AnamolyDetector() {
                     <>
                       <div className="space-y-2">
                         <p className="text-lg font-medium">
-                          Total Rows: {distributionData.totalRows}
+                          Total Rows: {distributionData.class_distribution.totalRows}
                         </p>
                         <p className="text-sm text-gray-700">
-                          Normal Access: {distributionData.normalCount} (
-                          {normalPercentage}%)
+                          Normal Access: {distributionData.class_distribution.normalCount} (
+                          {normalPercentage})
                         </p>
                         <p className="text-sm text-gray-700">
-                          Malicious Access: {distributionData.maliciousCount} (
-                          {maliciousPercentage}%)
+                          Malicious Access: {distributionData.class_distribution.maliciousCount} (
+                          {maliciousPercentage})
                         </p>
                       </div>
                       {pieChartData && (
