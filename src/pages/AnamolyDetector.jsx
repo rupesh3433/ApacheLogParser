@@ -42,10 +42,11 @@ function AnamolyDetector() {
   // File input ref for programmatically opening file dialog
   const fileInputRef = useRef(null);
 
-  // Use Vite's env variables with a fallback
-  const rawApiUrl =
-    import.meta.env.VITE_API_BASE_URL || "http://localhost:1000";
-  const API_PREDICT_URL = `${rawApiUrl}/predict`;
+  // Use Vite's env variables with a fallback.
+  // If VITE_API_PREDICT_URL is defined, use it; otherwise, construct from VITE_API_BASE_URL.
+  const API_PREDICT_URL =
+    import.meta.env.VITE_API_PREDICT_URL ||
+    `${import.meta.env.VITE_API_BASE_URL || "http://localhost:1000"}/predict`;
 
   // React Router navigation hook
   const navigate = useNavigate();

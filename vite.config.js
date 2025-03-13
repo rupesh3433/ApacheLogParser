@@ -13,19 +13,18 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      // Proxy endpoints to your backend (with trailing slashes for better routing)
       '/upload/': {
-        target: process.env.VITE_API_BASE_URL || 'https://apachelogparser-backend.onrender.com',
-        changeOrigin: true,
-        secure: false,
-      },
-      '/download/': {
-        target: process.env.VITE_API_BASE_URL || 'https://apachelogparser-backend.onrender.com',
+        target: process.env.VITE_API_BASE_URL,
         changeOrigin: true,
         secure: false,
       },
       '/predict/': {
-        target: process.env.VITE_API_BASE_URL || 'https://apachelogparser-backend.onrender.com',
+        target: process.env.VITE_API_BASE_URL,
+        changeOrigin: true,
+        secure: false,
+      },
+      '/download/': {
+        target: process.env.VITE_API_BASE_URL,
         changeOrigin: true,
         secure: false,
       },

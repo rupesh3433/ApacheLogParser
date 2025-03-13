@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 
 // Maximum allowed file size (500MB)
-const MAX_FILE_SIZE = 500 * 1024 * 1024; // 100MB in bytes
+const MAX_FILE_SIZE = 500 * 1024 * 1024;
 
 function ApacheLogParser() {
   const [file, setFile] = useState(null);
@@ -36,19 +36,17 @@ function ApacheLogParser() {
   // File input ref for programmatically opening file dialog
   const fileInputRef = useRef(null);
 
-  // Use Vite's env variables with a fallback
+  // Use Vite's env variables with a fallback.
   const rawApiUrl =
     import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
   const API_UPLOAD_URL = `${rawApiUrl}/upload`;
-  const API_DOWNLOAD_BASE = `${rawApiUrl}/download`;
 
   // React Router navigation hook
   const navigate = useNavigate();
 
   useEffect(() => {
     console.log("API_UPLOAD_URL:", API_UPLOAD_URL);
-    console.log("API_DOWNLOAD_BASE:", API_DOWNLOAD_BASE);
-  }, [API_UPLOAD_URL, API_DOWNLOAD_BASE]);
+  }, [API_UPLOAD_URL]);
 
   // Cleanup blob URL on unmount or when downloadLink changes
   useEffect(() => {
@@ -74,7 +72,7 @@ function ApacheLogParser() {
         return;
       }
       if (selectedFile.size > MAX_FILE_SIZE) {
-        setError("File size exceeds 50MB. Please upload a smaller file.");
+        setError("File size exceeds 500MB. Please upload a smaller file.");
         setFile(null);
         return;
       }
@@ -95,7 +93,7 @@ function ApacheLogParser() {
         return;
       }
       if (droppedFile.size > MAX_FILE_SIZE) {
-        setError("File size exceeds 5MB. Please upload a smaller file.");
+        setError("File size exceeds 500MB. Please upload a smaller file.");
         setFile(null);
         return;
       }
@@ -123,11 +121,7 @@ function ApacheLogParser() {
   const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   // Upload with retry mechanism (up to 3 attempts with exponential backoff)
-  const uploadFileWithRetry = async (
-    formData,
-    retries = 3,
-    delayTime = 1000
-  ) => {
+  const uploadFileWithRetry = async (formData, retries = 3, delayTime = 1000) => {
     try {
       const response = await axios.post(API_UPLOAD_URL, formData, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -205,9 +199,7 @@ function ApacheLogParser() {
               Apache Log Parser
             </h1>
             <p className="mt-2 text-1xl opacity-90 max-w-2xl">
-              Convert your{" "}
-              <span className="font-semibold">Apache Log files</span>{" "}
-               into structured CSV data for easy analysis.
+              Convert your <span className="font-semibold">Apache Log files</span> into structured CSV data for easy analysis.
             </p>
           </div>
           <div>
@@ -250,15 +242,11 @@ function ApacheLogParser() {
                 <CardContent>
                   <div className="space-y-4">
                     <p className="text-sm text-gray-600">
-                      Example of a single line in the Apache Combined Log
-                      Format:
+                      Example of a single line in the Apache Combined Log Format:
                     </p>
                     <pre className="bg-slate-900 text-white p-4 rounded-lg overflow-x-auto font-mono text-sm border border-slate-700 shadow-md">
                       <code>
-                        127.0.0.1 - - [10/Oct/2000:13:55:36 -0700] "GET
-                        /apache_pb.gif HTTP/1.0" 200 2326
-                        "http://example.com/start.html" "Mozilla/4.08 [en]
-                        (Win98; I; Nav)"
+                        127.0.0.1 - - [10/Oct/2000:13:55:36 -0700] "GET /apache_pb.gif HTTP/1.0" 200 2326 "http://example.com/start.html" "Mozilla/4.08 [en] (Win98; I; Nav)"
                       </code>
                     </pre>
                   </div>
@@ -280,58 +268,26 @@ function ApacheLogParser() {
                     <table className="min-w-full border border-slate-200 rounded-lg">
                       <thead className="bg-slate-100">
                         <tr>
-                          <th className="px-4 py-2 border border-slate-200 text-left">
-                            ip
-                          </th>
-                          <th className="px-4 py-2 border border-slate-200 text-left">
-                            timestamp
-                          </th>
-                          <th className="px-4 py-2 border border-slate-200 text-left">
-                            method
-                          </th>
-                          <th className="px-4 py-2 border border-slate-200 text-left">
-                            url
-                          </th>
-                          <th className="px-4 py-2 border border-slate-200 text-left">
-                            status
-                          </th>
-                          <th className="px-4 py-2 border border-slate-200 text-left">
-                            size
-                          </th>
-                          <th className="px-4 py-2 border border-slate-200 text-left">
-                            referrer
-                          </th>
-                          <th className="px-4 py-2 border border-slate-200 text-left">
-                            user_agent
-                          </th>
+                          <th className="px-4 py-2 border border-slate-200 text-left">ip</th>
+                          <th className="px-4 py-2 border border-slate-200 text-left">timestamp</th>
+                          <th className="px-4 py-2 border border-slate-200 text-left">method</th>
+                          <th className="px-4 py-2 border border-slate-200 text-left">url</th>
+                          <th className="px-4 py-2 border border-slate-200 text-left">status</th>
+                          <th className="px-4 py-2 border border-slate-200 text-left">size</th>
+                          <th className="px-4 py-2 border border-slate-200 text-left">referrer</th>
+                          <th className="px-4 py-2 border border-slate-200 text-left">user_agent</th>
                         </tr>
                       </thead>
                       <tbody>
                         <tr>
-                          <td className="px-4 py-2 border border-slate-200">
-                            127.0.0.1
-                          </td>
-                          <td className="px-4 py-2 border border-slate-200">
-                            2000-10-10 13:55:36
-                          </td>
-                          <td className="px-4 py-2 border border-slate-200">
-                            GET
-                          </td>
-                          <td className="px-4 py-2 border border-slate-200">
-                            /apache_pb.gif
-                          </td>
-                          <td className="px-4 py-2 border border-slate-200">
-                            200
-                          </td>
-                          <td className="px-4 py-2 border border-slate-200">
-                            2326
-                          </td>
-                          <td className="px-4 py-2 border border-slate-200">
-                            http://example.com/start.html
-                          </td>
-                          <td className="px-4 py-2 border border-slate-200">
-                            Mozilla/4.08 [en] (Win98; I; Nav)
-                          </td>
+                          <td className="px-4 py-2 border border-slate-200">127.0.0.1</td>
+                          <td className="px-4 py-2 border border-slate-200">2000-10-10 13:55:36</td>
+                          <td className="px-4 py-2 border border-slate-200">GET</td>
+                          <td className="px-4 py-2 border border-slate-200">/apache_pb.gif</td>
+                          <td className="px-4 py-2 border border-slate-200">200</td>
+                          <td className="px-4 py-2 border border-slate-200">2326</td>
+                          <td className="px-4 py-2 border border-slate-200">http://example.com/start.html</td>
+                          <td className="px-4 py-2 border border-slate-200">Mozilla/4.08 [en] (Win98; I; Nav)</td>
                         </tr>
                       </tbody>
                     </table>
@@ -340,7 +296,7 @@ function ApacheLogParser() {
               </Card>
             </TabsContent>
 
-            {/* Upload Tab */}
+            {/* Upload Log Tab */}
             <TabsContent value="upload">
               <Card>
                 <CardHeader>
@@ -349,16 +305,12 @@ function ApacheLogParser() {
                     Upload Apache Log File
                   </CardTitle>
                   <CardDescription>
-                    Select or drag and drop your <strong>.log</strong> file for
-                    processing.
+                    Select or drag and drop your <strong>.log</strong> file for processing.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {error && (
-                    <Alert
-                      variant="destructive"
-                      className="bg-red-50 border-red-300 text-red-800"
-                    >
+                    <Alert variant="destructive" className="bg-red-50 border-red-300 text-red-800">
                       <AlertTitle>Error</AlertTitle>
                       <AlertDescription>{error}</AlertDescription>
                     </Alert>
@@ -368,15 +320,12 @@ function ApacheLogParser() {
                       <CheckCircle className="h-4 w-4" />
                       <AlertTitle>Success!</AlertTitle>
                       <AlertDescription>
-                        Your log file has been successfully processed. You can
-                        now download the CSV.
+                        Your log file has been successfully processed. You can now download the CSV.
                       </AlertDescription>
                     </Alert>
                   )}
                   <div
-                    className={`border-2 ${
-                      isDragging ? "border-blue-500" : "border-slate-300"
-                    } border-dashed rounded-lg p-6 text-center transition-colors`}
+                    className={`border-2 ${isDragging ? "border-blue-500" : "border-slate-300"} border-dashed rounded-lg p-6 text-center transition-colors`}
                     onDragOver={handleDragOver}
                     onDragEnter={handleDragEnter}
                     onDragLeave={handleDragLeave}
@@ -386,79 +335,40 @@ function ApacheLogParser() {
                       <FileText size={48} className="text-slate-400" />
                       <div>
                         <p className="font-medium text-slate-700">
-                          {file
-                            ? file.name
-                            : "Drag and drop your .log file here"}
+                          {file ? file.name : "Drag and drop your .log file here"}
                         </p>
                         <p className="text-sm text-slate-500 mt-1">
                           {file
-                            ? `${(file.size / 1024).toFixed(
-                                2
-                              )} KB • Last modified: ${new Date(
-                                file.lastModified
-                              ).toLocaleDateString()}`
+                            ? `${(file.size / 1024).toFixed(2)} KB • Last modified: ${new Date(file.lastModified).toLocaleDateString()}`
                             : "or click below to browse files"}
                         </p>
                       </div>
                       <div className="w-full">
                         {/* Hidden File Input */}
-                        <input
-                          type="file"
-                          ref={fileInputRef}
-                          className="hidden"
-                          onChange={handleFileChange}
-                        />
+                        <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
 
                         {/* Mobile layout: vertical stack */}
                         <div className="md:hidden flex flex-col gap-3">
-                          <Button
-                            variant="outline"
-                            className="w-full"
-                            onClick={openFileDialog}
-                          >
+                          <Button variant="outline" className="w-full" onClick={openFileDialog}>
                             Select File
                           </Button>
-                          <Button
-                            onClick={handleUpload}
-                            disabled={!file || isLoading}
-                            className="w-full"
-                          >
+                          <Button onClick={handleUpload} disabled={!file || isLoading} className="w-full">
                             {isLoading ? "Processing..." : "Process Log"}
                           </Button>
-                          <Button
-                            variant="outline"
-                            onClick={clearFile}
-                            disabled={!file}
-                            className="w-full"
-                          >
+                          <Button variant="outline" onClick={clearFile} disabled={!file} className="w-full">
                             Clear File
                           </Button>
                         </div>
 
                         {/* Medium and larger screens: grid with 2 rows and 2 columns */}
                         <div className="hidden md:grid grid-cols-2 grid-rows-2 gap-3">
-                          {/* First row: button spans 2 columns */}
-                          <Button
-                            variant="outline"
-                            className="col-span-2"
-                            onClick={openFileDialog}
-                          >
+                          <Button variant="outline" className="col-span-2" onClick={openFileDialog}>
                             Select File
                           </Button>
-                          {/* Second row: two buttons side by side */}
-                          <Button
-                            onClick={handleUpload}
-                            disabled={!file || isLoading}
-                            className=""
-                          >
+                          <Button onClick={handleUpload} disabled={!file || isLoading}>
                             {isLoading ? "Processing..." : "Process Log"}
                           </Button>
-                          <Button
-                            variant="outline"
-                            onClick={clearFile}
-                            disabled={!file}
-                            className=""
-                          >
+                          <Button variant="outline" onClick={clearFile} disabled={!file}>
                             Clear File
                           </Button>
                         </div>
@@ -484,17 +394,13 @@ function ApacheLogParser() {
                 <CardContent className="flex flex-col items-center py-10">
                   {downloadLink && (
                     <div className="text-center space-y-6">
-                      <CheckCircle
-                        size={64}
-                        className="mx-auto text-green-500"
-                      />
+                      <CheckCircle size={64} className="mx-auto text-green-500" />
                       <div className="space-y-2">
                         <h3 className="text-xl font-semibold text-slate-800">
                           Processing Complete!
                         </h3>
                         <p className="text-slate-600 max-w-md mx-auto">
-                          Your Apache log file has been successfully converted
-                          to a cleaned CSV format.
+                          Your Apache log file has been successfully converted to a cleaned CSV format.
                         </p>
                       </div>
                       <a
@@ -507,14 +413,7 @@ function ApacheLogParser() {
                       </a>
                       <p className="text-sm text-slate-500 mt-4">
                         Need to process another file?{" "}
-                        <Button
-                          variant="link"
-                          className="p-0 h-auto font-normal"
-                          onClick={() => {
-                            setActiveTab("upload");
-                            clearFile();
-                          }}
-                        >
+                        <Button variant="link" className="p-0 h-auto font-normal" onClick={() => { setActiveTab("upload"); clearFile(); }}>
                           Go back to upload
                         </Button>
                       </p>
@@ -530,17 +429,11 @@ function ApacheLogParser() {
       {/* Footer with Return Button at bottom left */}
       <footer className="mt-auto bg-slate-800 text-slate-300 py-6 px-4">
         <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
-          <Button
-            variant="outline"
-            onClick={handleReturnToDashboard}
-            className="mb-4 md:mb-0"
-          >
+          <Button variant="outline" onClick={handleReturnToDashboard} className="mb-4 md:mb-0">
             Back to Dashboard
           </Button>
           <div className="text-center">
-            <p className="text-sm">
-              &copy; {new Date().getFullYear()} Apache Log Parser
-            </p>
+            <p className="text-sm">&copy; {new Date().getFullYear()} Apache Log Parser</p>
             <p className="text-xs text-slate-400 mt-1">All rights reserved</p>
           </div>
         </div>
