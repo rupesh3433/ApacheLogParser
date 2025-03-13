@@ -1,17 +1,20 @@
 {
-    "rewrites": [
-      {
-        "source": "/upload",
-        "destination": "https://apachelogparser-backend.onrender.com/upload"
-      },
-      {
-        "source": "/download",
-        "destination": "https://apachelogparser-backend.onrender.com/download"
-      },
-      {
-        "source": "/predict",
-        "destination": "https://apachelogparser-backend.onrender.com/predict"
-      }
-    ]
-  }
-  
+  "rewrites": [
+    {
+      "source": "/upload",
+      "destination": "https://apachelogparser-backend.onrender.com/upload"
+    },
+    {
+      "source": "/download",
+      "destination": "https://apachelogparser-backend.onrender.com/download"
+    },
+    {
+      "source": "/predict",
+      "destination": "https://apachelogparser-backend.onrender.com/predict"
+    },
+    {
+      "source": "/(?!api|upload|download|predict)(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
