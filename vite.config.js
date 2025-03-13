@@ -11,26 +11,4 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  server: {
-    proxy: {
-      '/upload/': {
-        target: process.env.VITE_API_BASE_URL,
-        changeOrigin: true,
-        secure: false,
-      },
-      '/predict/': {
-        target: process.env.VITE_API_BASE_URL,
-        changeOrigin: true,
-        secure: false,
-      },
-      '/download/': {
-        target: process.env.VITE_API_BASE_URL,
-        changeOrigin: true,
-        secure: false,
-      },
-    },
-  },
-  build: {
-    chunkSizeWarningLimit: 3000, // Increase the warning limit (in KB) as needed
-  },
 });

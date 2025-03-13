@@ -39,7 +39,7 @@ function ApacheLogParser() {
   // Use Vite's env variables with a fallback.
   const rawApiUrl =
     import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
-  const API_UPLOAD_URL = `${rawApiUrl}/upload`;
+  const API_UPLOAD_URL = `${rawApiUrl}/convertLogtoCSV`;
 
   // React Router navigation hook
   const navigate = useNavigate();

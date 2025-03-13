@@ -7,6 +7,12 @@ function Dashboard() {
   const navigate = useNavigate();
   const services = [
     {
+      key: "generator",
+      title: "Apache Log Generator",
+      description: "Generate custom Apache access logs with configurable settings.",
+      route: "/log-generator",
+    },
+    {
       key: "parser",
       title: "Apache Log Parser",
       description: "Convert your Apache logs into structured CSV data.",
@@ -17,36 +23,6 @@ function Dashboard() {
       title: "Anomaly Detector",
       description: "Detect anomalies in your logs with our ML model.",
       route: "/anomaly-detector",
-    },
-    {
-      key: "realtime",
-      title: "Real-Time Monitoring",
-      description: "Keep an eye on your logs with live monitoring.",
-      route: "/realtime-monitoring",
-    },
-    {
-      key: "analytics",
-      title: "Log Analytics Dashboard",
-      description: "Visualize and analyze log data with interactive dashboards.",
-      route: "/log-analytics",
-    },
-    {
-      key: "traffic",
-      title: "Traffic Analysis",
-      description: "Analyze traffic patterns from your Apache logs.",
-      route: "/traffic-analysis",
-    },
-    {
-      key: "security",
-      title: "Security Insights",
-      description: "Identify potential security threats from log files.",
-      route: "/security-insights",
-    },
-    {
-      key: "errors",
-      title: "Error Reporting",
-      description: "Generate error reports to aid in debugging.",
-      route: "/error-reporting",
     },
   ];
 

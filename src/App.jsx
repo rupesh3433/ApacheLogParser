@@ -1,16 +1,9 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import ApacheLogGenerator from "./pages/ApacheLogGenerator";
 import ApacheLogParser from "./pages/ApacheLogParser";
-import AnamolyDetector from "./pages/AnamolyDetector";
+import AnomalyDetector from "./pages/AnomalyDetector"; // Fixed typo in import name
 import Dashboard from "./pages/Dashboard";
-import {
-  RealTimeMonitoringPage,
-  LogAnalyticsPage,
-  TrafficAnalysisPage,
-  SecurityInsightsPage,
-  ErrorReportingPage,
-} from "./pages/Services";
-
 
 // ----------------------
 // Main App Component with Routing
@@ -42,13 +35,9 @@ function App() {
             </>
           }
         />
-        <Route path="/apache-log-parser" element={<ApacheLogParser/>} />
-        <Route path="/anomaly-detector" element={<AnamolyDetector />} />
-        <Route path="/realtime-monitoring" element={<RealTimeMonitoringPage />} />
-        <Route path="/log-analytics" element={<LogAnalyticsPage />} />
-        <Route path="/traffic-analysis" element={<TrafficAnalysisPage />} />
-        <Route path="/security-insights" element={<SecurityInsightsPage />} />
-        <Route path="/error-reporting" element={<ErrorReportingPage />} />
+        <Route path="/log-generator" element={<ApacheLogGenerator />} />
+        <Route path="/apache-log-parser" element={<ApacheLogParser />} />
+        <Route path="/anomaly-detector" element={<AnomalyDetector />} />
       </Routes>
     </BrowserRouter>
   );

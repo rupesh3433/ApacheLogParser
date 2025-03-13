@@ -46,7 +46,7 @@ function AnamolyDetector() {
   // If VITE_API_PREDICT_URL is defined, use it; otherwise, construct from VITE_API_BASE_URL.
   const API_PREDICT_URL =
     import.meta.env.VITE_API_PREDICT_URL ||
-    `${import.meta.env.VITE_API_BASE_URL || "http://localhost:1000"}/predict`;
+    `${import.meta.env.VITE_API_BASE_URL || "http://localhost:1000"}/predictAnomalies`;
 
   // React Router navigation hook
   const navigate = useNavigate();
