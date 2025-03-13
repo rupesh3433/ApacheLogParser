@@ -284,7 +284,7 @@ function AnamolyDetector() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-gray-600">
-                    Please ensure your CSV file is properly formatted and under 5MB.
+                    Please ensure your CSV file is properly formatted and under 50MB. This service is Highly Recommended to use After Parsing log file with our own Log Parser you can find in Dashboard.
                   </p>
                 </CardContent>
               </Card>
