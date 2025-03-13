@@ -43,7 +43,7 @@ function AnamolyDetector() {
 
   // Use Vite's env variables with a fallback
   const rawApiUrl =
-    import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+    import.meta.env.VITE_API_BASE_URL || "http://localhost:1000";
   const API_PREDICT_URL = `${rawApiUrl}/predict`;
 
   // React Router navigation hook

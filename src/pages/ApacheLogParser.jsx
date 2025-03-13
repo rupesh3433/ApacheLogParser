@@ -21,8 +21,8 @@ import {
   CheckCircle,
 } from "lucide-react";
 
-// Maximum allowed file size (50MB)
-const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024;
+// Maximum allowed file size (500MB)
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 100MB in bytes
 
 function ApacheLogParser() {
   const [file, setFile] = useState(null);
