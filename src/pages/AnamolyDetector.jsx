@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-// Example shadcn UI components (adjust import paths as per your project structure)
+// Shadcn UI components (adjust import paths as per your project)
 import {
   Card,
   CardContent,
@@ -21,12 +21,17 @@ import {
   CheckCircle,
 } from "lucide-react";
 
+// Import Pie chart components from react-chartjs-2 and Chart.js
+import { Pie } from "react-chartjs-2";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
+ChartJS.register(ArcElement, Tooltip, Legend);
+
 // Maximum allowed file size (50MB)
 const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024;
 
-function ApacheLogParser() {
+function AnamolyDetector() {
   const [file, setFile] = useState(null);
-  const [downloadLink, setDownloadLink] = useState(null);
+  const [distributionData, setDistributionData] = useState(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
@@ -39,37 +44,33 @@ function ApacheLogParser() {
   // Use Vite's env variables with a fallback
   const rawApiUrl =
     import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
-  const API_UPLOAD_URL = `${rawApiUrl}/upload`;
-  const API_DOWNLOAD_BASE = `${rawApiUrl}/download`;
+  const API_PREDICT_URL = `${rawApiUrl}/predict`;
 
   // React Router navigation hook
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log("API_UPLOAD_URL:", API_UPLOAD_URL);
-    console.log("API_DOWNLOAD_BASE:", API_DOWNLOAD_BASE);
-  }, [API_UPLOAD_URL, API_DOWNLOAD_BASE]);
+    console.log("API_PREDICT_URL:", API_PREDICT_URL);
+  }, [API_PREDICT_URL]);
 
-  // Cleanup blob URL on unmount or when downloadLink changes
+  // Cleanup blob URL on unmount (if used for any downloads)
   useEffect(() => {
     return () => {
-      if (downloadLink) {
-        URL.revokeObjectURL(downloadLink);
-      }
+      // Cleanup if needed
     };
-  }, [downloadLink]);
+  }, []);
 
-  // Validate file extension (.log)
+  // Validate file extension (.csv)
   const isValidFileType = (file) => {
     const fileName = file.name.toLowerCase();
-    return fileName.endsWith(".log");
+    return fileName.endsWith(".csv");
   };
 
   const handleFileChange = (event) => {
     const selectedFile = event.target.files[0];
     if (selectedFile) {
       if (!isValidFileType(selectedFile)) {
-        setError("Invalid file type. Please select a .log file.");
+        setError("Invalid file type. Please select a .csv file.");
         setFile(null);
         return;
       }
@@ -81,6 +82,7 @@ function ApacheLogParser() {
       setFile(selectedFile);
       setError("");
       setUploadSuccess(false);
+      setDistributionData(null);
     }
   };
 
@@ -90,7 +92,7 @@ function ApacheLogParser() {
     const droppedFile = e.dataTransfer.files[0];
     if (droppedFile) {
       if (!isValidFileType(droppedFile)) {
-        setError("Invalid file type. Please drop a .log file.");
+        setError("Invalid file type. Please drop a .csv file.");
         setFile(null);
         return;
       }
@@ -102,6 +104,7 @@ function ApacheLogParser() {
       setFile(droppedFile);
       setError("");
       setUploadSuccess(false);
+      setDistributionData(null);
     }
   };
 
@@ -119,19 +122,14 @@ function ApacheLogParser() {
     setIsDragging(false);
   };
 
-  // Helper: delay function
+  // Helper: delay function for retry mechanism (if needed)
   const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  // Upload with retry mechanism (up to 3 attempts with exponential backoff)
-  const uploadFileWithRetry = async (
-    formData,
-    retries = 3,
-    delayTime = 1000
-  ) => {
+  // Upload file with retry mechanism (if needed)
+  const uploadFileWithRetry = async (formData, retries = 3, delayTime = 1000) => {
     try {
-      const response = await axios.post(API_UPLOAD_URL, formData, {
+      const response = await axios.post(API_PREDICT_URL, formData, {
         headers: { "Content-Type": "multipart/form-data" },
-        responseType: "blob",
       });
       return response;
     } catch (err) {
@@ -146,26 +144,31 @@ function ApacheLogParser() {
 
   const handleUpload = async () => {
     if (!file) {
-      setError("Please select a .log file");
+      setError("Please select a .csv file");
       return;
     }
-
+  
     setError("");
     setIsLoading(true);
     setUploadSuccess(false);
-
+  
     const formData = new FormData();
     formData.append("file", file);
-
+  
     try {
       const response = await uploadFileWithRetry(formData);
-      // Create a temporary URL for the CSV blob response
-      const blobUrl = window.URL.createObjectURL(
-        new Blob([response.data], { type: "text/csv" })
-      );
-      setDownloadLink(blobUrl);
+  
+      // Handle empty CSV response
+      if (response.data === "emptyCSV") {
+        setError("The uploaded CSV file is empty. Please upload a valid dataset.");
+        setIsLoading(false);
+        return;
+      }
+  
+      // Assuming the response contains JSON with totalRows, normalCount, maliciousCount
+      setDistributionData(response.data);
       setUploadSuccess(true);
-      setActiveTab("download");
+      setActiveTab("results");
     } catch (err) {
       console.error("Error uploading file:", err);
       setError(
@@ -177,12 +180,13 @@ function ApacheLogParser() {
       setIsLoading(false);
     }
   };
+  
 
   const clearFile = () => {
     setFile(null);
     setError("");
     setUploadSuccess(false);
-    setDownloadLink(null);
+    setDistributionData(null);
   };
 
   // Function to open file dialog programmatically
@@ -195,19 +199,43 @@ function ApacheLogParser() {
     navigate("/");
   };
 
+  // Prepare Pie chart data if distributionData exists
+  const pieChartData = distributionData
+    ? {
+        labels: ["Normal Access", "Malicious Access"],
+        datasets: [
+          {
+            data: [
+              distributionData.normalCount,
+              distributionData.maliciousCount,
+            ],
+            backgroundColor: ["#36A2EB", "#FF6384"],
+            hoverBackgroundColor: ["#36A2EB", "#FF6384"],
+          },
+        ],
+      }
+    : null;
+
+  // Calculate percentages if distributionData exists
+  const normalPercentage = distributionData
+    ? ((distributionData.normalCount / distributionData.totalRows) * 100).toFixed(2)
+    : 0;
+  const maliciousPercentage = distributionData
+    ? ((distributionData.maliciousCount / distributionData.totalRows) * 100).toFixed(2)
+    : 0;
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
-      {/* Header with Return Button at top right */}
+      {/* Header with Return Button */}
       <header className="bg-gradient-to-r from-blue-700 to-indigo-800 text-white py-6 md:py-10 shadow-lg">
         <div className="container mx-auto px-4 flex justify-between items-center">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold">
-              Apache Log Parser
+              Anamoly Detector
             </h1>
             <p className="mt-2 text-1xl opacity-90 max-w-2xl">
-              Convert your{" "}
-              <span className="font-semibold">Apache Log files</span>{" "}
-               into structured CSV data for easy analysis.
+              Upload your CSV dataset for prediction to view the distribution of
+              Normal and Malicious access.
             </p>
           </div>
           <div>
@@ -228,129 +256,46 @@ function ApacheLogParser() {
             className="mb-8"
           >
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="format">Format Info</TabsTrigger>
-              <TabsTrigger value="upload">Upload Log</TabsTrigger>
-              <TabsTrigger value="download" disabled={!downloadLink}>
-                Download CSV
+              <TabsTrigger value="info">Info</TabsTrigger>
+              <TabsTrigger value="upload">Upload CSV</TabsTrigger>
+              <TabsTrigger value="results" disabled={!distributionData}>
+                Results
               </TabsTrigger>
             </TabsList>
 
-            {/* Format Information Tab */}
-            <TabsContent value="format" className="space-y-6">
+            {/* Info Tab */}
+            <TabsContent value="info" className="space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-2xl">
                     <Info size={20} className="text-blue-600" />
-                    Input Log Format
+                    CSV Input Format
                   </CardTitle>
                   <CardDescription>
-                    Your Apache log file should follow the Combined Log Format.
+                    Your CSV file should contain your dataset for prediction. The
+                    service will analyze the file and return the total number of
+                    rows along with the distribution of Normal (class 0) and
+                    Malicious (class 1) accesses.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <p className="text-sm text-gray-600">
-                      Example of a single line in the Apache Combined Log
-                      Format:
-                    </p>
-                    <pre className="bg-slate-900 text-white p-4 rounded-lg overflow-x-auto font-mono text-sm border border-slate-700 shadow-md">
-                      <code>
-                        127.0.0.1 - - [10/Oct/2000:13:55:36 -0700] "GET
-                        /apache_pb.gif HTTP/1.0" 200 2326
-                        "http://example.com/start.html" "Mozilla/4.08 [en]
-                        (Win98; I; Nav)"
-                      </code>
-                    </pre>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-2xl">
-                    <FileText size={20} className="text-blue-600" />
-                    Output CSV Format
-                  </CardTitle>
-                  <CardDescription>
-                    The processed CSV file will contain these columns.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full border border-slate-200 rounded-lg">
-                      <thead className="bg-slate-100">
-                        <tr>
-                          <th className="px-4 py-2 border border-slate-200 text-left">
-                            ip
-                          </th>
-                          <th className="px-4 py-2 border border-slate-200 text-left">
-                            timestamp
-                          </th>
-                          <th className="px-4 py-2 border border-slate-200 text-left">
-                            method
-                          </th>
-                          <th className="px-4 py-2 border border-slate-200 text-left">
-                            url
-                          </th>
-                          <th className="px-4 py-2 border border-slate-200 text-left">
-                            status
-                          </th>
-                          <th className="px-4 py-2 border border-slate-200 text-left">
-                            size
-                          </th>
-                          <th className="px-4 py-2 border border-slate-200 text-left">
-                            referrer
-                          </th>
-                          <th className="px-4 py-2 border border-slate-200 text-left">
-                            user_agent
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td className="px-4 py-2 border border-slate-200">
-                            127.0.0.1
-                          </td>
-                          <td className="px-4 py-2 border border-slate-200">
-                            2000-10-10 13:55:36
-                          </td>
-                          <td className="px-4 py-2 border border-slate-200">
-                            GET
-                          </td>
-                          <td className="px-4 py-2 border border-slate-200">
-                            /apache_pb.gif
-                          </td>
-                          <td className="px-4 py-2 border border-slate-200">
-                            200
-                          </td>
-                          <td className="px-4 py-2 border border-slate-200">
-                            2326
-                          </td>
-                          <td className="px-4 py-2 border border-slate-200">
-                            http://example.com/start.html
-                          </td>
-                          <td className="px-4 py-2 border border-slate-200">
-                            Mozilla/4.08 [en] (Win98; I; Nav)
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
+                  <p className="text-sm text-gray-600">
+                    Please ensure your CSV file is properly formatted and under 5MB.
+                  </p>
                 </CardContent>
               </Card>
             </TabsContent>
 
-            {/* Upload Tab */}
+            {/* Upload CSV Tab */}
             <TabsContent value="upload">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-2xl">
                     <Upload size={20} className="text-blue-600" />
-                    Upload Apache Log File
+                    Upload CSV Dataset
                   </CardTitle>
                   <CardDescription>
-                    Select or drag and drop your <strong>.log</strong> file for
-                    processing.
+                    Select or drag and drop your <strong>.csv</strong> file for analysis.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -368,8 +313,7 @@ function ApacheLogParser() {
                       <CheckCircle className="h-4 w-4" />
                       <AlertTitle>Success!</AlertTitle>
                       <AlertDescription>
-                        Your log file has been successfully processed. You can
-                        now download the CSV.
+                        Your CSV file has been successfully processed.
                       </AlertDescription>
                     </Alert>
                   )}
@@ -386,15 +330,11 @@ function ApacheLogParser() {
                       <FileText size={48} className="text-slate-400" />
                       <div>
                         <p className="font-medium text-slate-700">
-                          {file
-                            ? file.name
-                            : "Drag and drop your .log file here"}
+                          {file ? file.name : "Drag and drop your .csv file here"}
                         </p>
                         <p className="text-sm text-slate-500 mt-1">
                           {file
-                            ? `${(file.size / 1024).toFixed(
-                                2
-                              )} KB • Last modified: ${new Date(
+                            ? `${(file.size / 1024).toFixed(2)} KB • Last modified: ${new Date(
                                 file.lastModified
                               ).toLocaleDateString()}`
                             : "or click below to browse files"}
@@ -408,8 +348,6 @@ function ApacheLogParser() {
                           className="hidden"
                           onChange={handleFileChange}
                         />
-
-                        {/* Mobile layout: vertical stack */}
                         <div className="md:hidden flex flex-col gap-3">
                           <Button
                             variant="outline"
@@ -423,7 +361,7 @@ function ApacheLogParser() {
                             disabled={!file || isLoading}
                             className="w-full"
                           >
-                            {isLoading ? "Processing..." : "Process Log"}
+                            {isLoading ? "Processing..." : "Process CSV"}
                           </Button>
                           <Button
                             variant="outline"
@@ -434,10 +372,7 @@ function ApacheLogParser() {
                             Clear File
                           </Button>
                         </div>
-
-                        {/* Medium and larger screens: grid with 2 rows and 2 columns */}
                         <div className="hidden md:grid grid-cols-2 grid-rows-2 gap-3">
-                          {/* First row: button spans 2 columns */}
                           <Button
                             variant="outline"
                             className="col-span-2"
@@ -445,19 +380,16 @@ function ApacheLogParser() {
                           >
                             Select File
                           </Button>
-                          {/* Second row: two buttons side by side */}
                           <Button
                             onClick={handleUpload}
                             disabled={!file || isLoading}
-                            className=""
                           >
-                            {isLoading ? "Processing..." : "Process Log"}
+                            {isLoading ? "Processing..." : "Process CSV"}
                           </Button>
                           <Button
                             variant="outline"
                             onClick={clearFile}
                             disabled={!file}
-                            className=""
                           >
                             Clear File
                           </Button>
@@ -469,56 +401,44 @@ function ApacheLogParser() {
               </Card>
             </TabsContent>
 
-            {/* Download Tab */}
-            <TabsContent value="download">
+            {/* Results / Distribution Tab */}
+            <TabsContent value="results">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-2xl">
                     <ArrowDownToLine size={20} className="text-blue-600" />
-                    Download Processed CSV
+                    Analysis Results
                   </CardTitle>
                   <CardDescription>
-                    Your log file has been processed and is ready for download.
+                    Review the distribution of accesses in your CSV dataset.
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="flex flex-col items-center py-10">
-                  {downloadLink && (
-                    <div className="text-center space-y-6">
-                      <CheckCircle
-                        size={64}
-                        className="mx-auto text-green-500"
-                      />
+                <CardContent className="space-y-6">
+                  {distributionData ? (
+                    <>
                       <div className="space-y-2">
-                        <h3 className="text-xl font-semibold text-slate-800">
-                          Processing Complete!
-                        </h3>
-                        <p className="text-slate-600 max-w-md mx-auto">
-                          Your Apache log file has been successfully converted
-                          to a cleaned CSV format.
+                        <p className="text-lg font-medium">
+                          Total Rows: {distributionData.totalRows}
+                        </p>
+                        <p className="text-sm text-gray-700">
+                          Normal Access: {distributionData.normalCount} (
+                          {normalPercentage}%)
+                        </p>
+                        <p className="text-sm text-gray-700">
+                          Malicious Access: {distributionData.maliciousCount} (
+                          {maliciousPercentage}%)
                         </p>
                       </div>
-                      <a
-                        href={downloadLink}
-                        className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-all shadow-md hover:shadow-lg"
-                        download
-                      >
-                        <ArrowDownToLine size={18} />
-                        Download CSV File
-                      </a>
-                      <p className="text-sm text-slate-500 mt-4">
-                        Need to process another file?{" "}
-                        <Button
-                          variant="link"
-                          className="p-0 h-auto font-normal"
-                          onClick={() => {
-                            setActiveTab("upload");
-                            clearFile();
-                          }}
-                        >
-                          Go back to upload
-                        </Button>
-                      </p>
-                    </div>
+                      {pieChartData && (
+                        <div className="max-w-md mx-auto">
+                          <Pie data={pieChartData} />
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-center text-gray-600">
+                      No analysis results to display. Please upload a CSV file.
+                    </p>
                   )}
                 </CardContent>
               </Card>
@@ -527,7 +447,7 @@ function ApacheLogParser() {
         </div>
       </div>
 
-      {/* Footer with Return Button at bottom left */}
+      {/* Footer with Return Button */}
       <footer className="mt-auto bg-slate-800 text-slate-300 py-6 px-4">
         <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
           <Button
@@ -539,7 +459,7 @@ function ApacheLogParser() {
           </Button>
           <div className="text-center">
             <p className="text-sm">
-              &copy; {new Date().getFullYear()} Apache Log Parser
+              &copy; {new Date().getFullYear()} CSV Distribution Analyzer
             </p>
             <p className="text-xs text-slate-400 mt-1">All rights reserved</p>
           </div>
@@ -549,4 +469,4 @@ function ApacheLogParser() {
   );
 }
 
-export default ApacheLogParser;
+export default AnamolyDetector;

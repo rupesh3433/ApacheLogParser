@@ -1,9 +1,9 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ApacheLogParser from "./pages/ApacheLogParser";
+import AnamolyDetector from "./pages/AnamolyDetector";
 import Dashboard from "./pages/Dashboard";
 import {
-  AnomalyDetectorPage,
   RealTimeMonitoringPage,
   LogAnalyticsPage,
   TrafficAnalysisPage,
@@ -43,7 +43,7 @@ function App() {
           }
         />
         <Route path="/apache-log-parser" element={<ApacheLogParser/>} />
-        <Route path="/anomaly-detector" element={<AnomalyDetectorPage />} />
+        <Route path="/anomaly-detector" element={<AnamolyDetector />} />
         <Route path="/realtime-monitoring" element={<RealTimeMonitoringPage />} />
         <Route path="/log-analytics" element={<LogAnalyticsPage />} />
         <Route path="/traffic-analysis" element={<TrafficAnalysisPage />} />
