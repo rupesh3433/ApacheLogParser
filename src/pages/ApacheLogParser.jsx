@@ -141,6 +141,7 @@ function ApacheLogParser() {
   const handleUpload = async () => {
     if (!file) {
       setError("Please select a .log file");
+      console.log("No file selected");
       return;
     }
 
