@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HashRouter, Routes, Route } from "react-router-dom";
 import ApacheLogGenerator from "./pages/ApacheLogGenerator";
 import ApacheLogParser from "./pages/ApacheLogParser";
 import AnomalyDetector from "./pages/AnomalyDetector"; // Fixed typo in import name
@@ -10,7 +10,7 @@ import Dashboard from "./pages/Dashboard";
 // ----------------------
 function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         <Route
           path="/"
@@ -39,7 +39,7 @@ function App() {
         <Route path="/apache-log-parser" element={<ApacheLogParser />} />
         <Route path="/anomaly-detector" element={<AnomalyDetector />} />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 
