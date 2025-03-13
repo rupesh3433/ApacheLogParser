@@ -60,10 +60,14 @@ function AnamolyDetector() {
     };
   }, []);
 
-  // Validate file extension (.csv)
+  // Update the file type validation to include Excel file extensions
   const isValidFileType = (file) => {
     const fileName = file.name.toLowerCase();
-    return fileName.endsWith(".csv");
+    return (
+      fileName.endsWith(".csv") ||
+      fileName.endsWith(".xls") ||
+      fileName.endsWith(".xlsx")
+    );
   };
 
   const handleFileChange = (event) => {
