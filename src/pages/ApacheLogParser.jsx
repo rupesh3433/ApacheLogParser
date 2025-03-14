@@ -113,26 +113,33 @@ function ApacheLogParser() {
   };
 
   // Helper: delay function
-  const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-  // Upload with retry mechanism (up to 3 attempts with exponential backoff)
   const uploadFileWithRetry = async (formData, retries = 3, delayTime = 1000) => {
     try {
       const response = await axios.post(VITE_API_UPLOAD_URL, formData, {
         headers: { "Content-Type": "multipart/form-data" },
         responseType: "blob",
+        timeout: 600000, // 10 minutes
+        maxContentLength: Infinity, 
+        maxBodyLength: Infinity,
+        onUploadProgress: (progressEvent) => {
+          console.log(`Upload Progress: ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
+        }
       });
       return response;
     } catch (err) {
       if (retries > 0) {
+        console.log(`Retrying... (${retries} attempts left)`);
         await delay(delayTime);
         return await uploadFileWithRetry(formData, retries - 1, delayTime * 2);
       } else {
+        console.error("Upload failed after multiple retries:", err);
         throw err;
       }
     }
   };
-
+        
   const handleUpload = async () => {
     if (!file) {
       setError("Please select a .log file");

@@ -49,8 +49,8 @@ function ApacheLogGenerator() {
       return;
     }
 
-    // For large files (>= 100,000 rows), use dynamic form submission
-    if (totalRows >= 100000) {
+    // For large files (> 100,000 rows), use dynamic form submission
+    if (totalRows > 100000) {
       const form = document.createElement("form");
       form.method = "POST";
       form.action = VITE_API_GENERATE_URL;
