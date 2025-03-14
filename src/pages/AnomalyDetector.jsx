@@ -42,18 +42,14 @@ function AnamolyDetector() {
   // File input ref for programmatically opening file dialog
   const fileInputRef = useRef(null);
 
-  // Use Vite's env variables with a fallback.
-  // If VITE_API_PREDICT_URL is defined, use it; otherwise, construct from VITE_API_BASE_URL.
-  const API_PREDICT_URL =
-    import.meta.env.VITE_API_PREDICT_URL ||
-    `${import.meta.env.VITE_API_BASE_URL || "http://localhost:1000"}/predictAnomalies`;
+  const VITE_API_PREDICT_URL = import.meta.env.VITE_API_PREDICT_URL
 
   // React Router navigation hook
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log("API_PREDICT_URL:", API_PREDICT_URL);
-  }, [API_PREDICT_URL]);
+    console.log("API_PREDICT_URL:", VITE_API_PREDICT_URL);
+  }, [VITE_API_PREDICT_URL]);
 
   // Debug: Log distributionData whenever it changes
   useEffect(() => {
@@ -134,7 +130,7 @@ function AnamolyDetector() {
   // Upload file with retry mechanism (if needed)
   const uploadFileWithRetry = async (formData, retries = 3, delayTime = 1000) => {
     try {
-      const response = await axios.post(API_PREDICT_URL, formData, {
+      const response = await axios.post(VITE_API_PREDICT_URL, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       return response;

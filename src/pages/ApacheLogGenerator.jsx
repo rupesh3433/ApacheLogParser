@@ -24,15 +24,13 @@ function ApacheLogGenerator() {
   const [activeTab, setActiveTab] = useState("generator");
 
   // API URL from environment variable with fallback
-  const API_GENERATE_URL =
-    import.meta.env.VITE_API_GENERATE_URL ||
-    `${import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:10000"}/generateLogs`;
+  const VITE_API_GENERATE_URL = import.meta.env.VITE_API_GENERATE_URL
 
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log("API_GENERATE_URL:", API_GENERATE_URL);
-  }, [API_GENERATE_URL]);
+    console.log("API_GENERATE_URL:", VITE_API_GENERATE_URL);
+  }, [VITE_API_GENERATE_URL]);
 
   const handleGenerate = async () => {
     setError("");
@@ -55,7 +53,7 @@ function ApacheLogGenerator() {
     if (totalRows >= 100000) {
       const form = document.createElement("form");
       form.method = "POST";
-      form.action = API_GENERATE_URL;
+      form.action = VITE_API_GENERATE_URL;
       form.enctype = "application/x-www-form-urlencoded";
       form.target = "_blank"; // Open in a new tab to force download
 
@@ -82,7 +80,7 @@ function ApacheLogGenerator() {
 
     // Otherwise, use fetch for smaller files
     try {
-      const response = await fetch(API_GENERATE_URL, {
+      const response = await fetch(VITE_API_GENERATE_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

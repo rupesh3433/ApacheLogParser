@@ -36,17 +36,12 @@ function ApacheLogParser() {
   // File input ref for programmatically opening file dialog
   const fileInputRef = useRef(null);
 
-  // Use Vite's env variables with a fallback.
-  const rawApiUrl =
-    import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
-  const API_UPLOAD_URL = `${rawApiUrl}/convertLogtoCSV`;
-
   // React Router navigation hook
   const navigate = useNavigate();
-
-  useEffect(() => {
-    console.log("API_UPLOAD_URL:", API_UPLOAD_URL);
-  }, [API_UPLOAD_URL]);
+  const VITE_API_UPLOAD_URL = import.meta.env.VITE_API_UPLOAD_URL;
+  // useEffect(() => {
+  //   console.log("VITE_API_UPLOAD_URL:", VITE_API_UPLOAD_URL);
+  // }, [VITE_API_UPLOAD_URL]);
 
   // Cleanup blob URL on unmount or when downloadLink changes
   useEffect(() => {
@@ -123,7 +118,7 @@ function ApacheLogParser() {
   // Upload with retry mechanism (up to 3 attempts with exponential backoff)
   const uploadFileWithRetry = async (formData, retries = 3, delayTime = 1000) => {
     try {
-      const response = await axios.post(API_UPLOAD_URL, formData, {
+      const response = await axios.post(VITE_API_UPLOAD_URL, formData, {
         headers: { "Content-Type": "multipart/form-data" },
         responseType: "blob",
       });
