@@ -39,9 +39,6 @@ function ApacheLogParser() {
   // React Router navigation hook
   const navigate = useNavigate();
   const VITE_API_UPLOAD_URL = import.meta.env.VITE_API_UPLOAD_URL;
-  // useEffect(() => {
-  //   console.log("VITE_API_UPLOAD_URL:", VITE_API_UPLOAD_URL);
-  // }, [VITE_API_UPLOAD_URL]);
 
   // Cleanup blob URL on unmount or when downloadLink changes
   useEffect(() => {
@@ -113,7 +110,7 @@ function ApacheLogParser() {
   };
 
   // Helper: delay function
-  const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+  const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   const uploadFileWithRetry = async (formData, retries = 3, delayTime = 1000) => {
     try {
@@ -121,11 +118,12 @@ function ApacheLogParser() {
         headers: { "Content-Type": "multipart/form-data" },
         responseType: "blob",
         timeout: 300000, // 5 minutes
-        maxContentLength: Infinity, 
+        maxContentLength: Infinity,
         maxBodyLength: Infinity,
+        withCredentials: true, // Include credentials if needed
         onUploadProgress: (progressEvent) => {
           console.log(`Upload Progress: ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
-        }
+        },
       });
       return response;
     } catch (err) {
@@ -139,7 +137,7 @@ function ApacheLogParser() {
       }
     }
   };
-        
+
   const handleUpload = async () => {
     if (!file) {
       setError("Please select a .log file");
@@ -198,9 +196,7 @@ function ApacheLogParser() {
       <header className="bg-gradient-to-r from-blue-700 to-indigo-800 text-white py-6 md:py-10 shadow-lg">
         <div className="container mx-auto px-4 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold">
-              Apache Log Parser
-            </h1>
+            <h1 className="text-3xl md:text-4xl font-bold">Apache Log Parser</h1>
             <p className="mt-2 text-1xl opacity-90 max-w-2xl">
               Convert your <span className="font-semibold">Apache Log files</span> into structured CSV data for easy analysis.
             </p>
