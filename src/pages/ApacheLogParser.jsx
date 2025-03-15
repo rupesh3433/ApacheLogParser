@@ -21,8 +21,8 @@ import {
   CheckCircle,
 } from "lucide-react";
 
-// Maximum allowed file size (500MB)
-const MAX_FILE_SIZE = 500 * 1024 * 1024;
+// Maximum allowed file size (300MB)
+const MAX_FILE_SIZE = 300 * 1024 * 1024;
 
 function ApacheLogParser() {
   const [file, setFile] = useState(null);
@@ -67,7 +67,7 @@ function ApacheLogParser() {
         return;
       }
       if (selectedFile.size > MAX_FILE_SIZE) {
-        setError("File size exceeds 500MB. Please upload a smaller file.");
+        setError("File size exceeds 300MB. Please upload a smaller file.");
         setFile(null);
         return;
       }
@@ -88,7 +88,7 @@ function ApacheLogParser() {
         return;
       }
       if (droppedFile.size > MAX_FILE_SIZE) {
-        setError("File size exceeds 500MB. Please upload a smaller file.");
+        setError("File size exceeds 300MB. Please upload a smaller file.");
         setFile(null);
         return;
       }
@@ -120,7 +120,7 @@ function ApacheLogParser() {
       const response = await axios.post(VITE_API_UPLOAD_URL, formData, {
         headers: { "Content-Type": "multipart/form-data" },
         responseType: "blob",
-        timeout: 600000, // 10 minutes
+        timeout: 300000, // 5 minutes
         maxContentLength: Infinity, 
         maxBodyLength: Infinity,
         onUploadProgress: (progressEvent) => {

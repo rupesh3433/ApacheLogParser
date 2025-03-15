@@ -26,9 +26,8 @@ import { Pie } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-// Maximum allowed file size (50MB)
-// (Note: Adjust MAX_FILE_SIZE if needed; current value is 5GB)
-const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024;
+// Maximum allowed file size (300MB)
+const MAX_FILE_SIZE = 300 * 1024 * 1024;
 
 function AnamolyDetector() {
   const [file, setFile] = useState(null);
