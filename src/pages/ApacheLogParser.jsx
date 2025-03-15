@@ -38,7 +38,10 @@ function ApacheLogParser() {
 
   // React Router navigation hook
   const navigate = useNavigate();
+
+  // Define the API URL once from the environment variable.
   const VITE_API_UPLOAD_URL = import.meta.env.VITE_API_UPLOAD_URL;
+  console.log("API_UPLOAD_URL:", VITE_API_UPLOAD_URL);
 
   // Cleanup blob URL on unmount or when downloadLink changes
   useEffect(() => {
@@ -51,8 +54,7 @@ function ApacheLogParser() {
 
   // Validate file extension (.log)
   const isValidFileType = (file) => {
-    const fileName = file.name.toLowerCase();
-    return fileName.endsWith(".log");
+    return file.name.toLowerCase().endsWith(".log");
   };
 
   const handleFileChange = (event) => {
@@ -114,17 +116,26 @@ function ApacheLogParser() {
 
   const uploadFileWithRetry = async (formData, retries = 3, delayTime = 1000) => {
     try {
-      const response = await axios.post(VITE_API_UPLOAD_URL, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-        responseType: "blob",
-        timeout: 300000, // 5 minutes
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity,
-        withCredentials: true, // Include credentials if needed
-        onUploadProgress: (progressEvent) => {
-          console.log(`Upload Progress: ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
-        },
-      });
+      // Append the correct endpoint, e.g. `/convertLogtoCSV/`
+      const response = await axios.post(
+        `${VITE_API_UPLOAD_URL}/convertLogtoCSV/`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+          responseType: "blob",
+          timeout: 300000, // 5 minutes
+          maxContentLength: Infinity,
+          maxBodyLength: Infinity,
+          withCredentials: true, // Include credentials if needed
+          onUploadProgress: (progressEvent) => {
+            console.log(
+              `Upload Progress: ${Math.round(
+                (progressEvent.loaded / progressEvent.total) * 100
+              )}%`
+            );
+          },
+        }
+      );
       return response;
     } catch (err) {
       if (retries > 0) {
