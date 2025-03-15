@@ -114,7 +114,7 @@ function ApacheLogParser() {
 
   const uploadFileWithRetry = async (formData, retries = 3, delayTime = 1000) => {
     try {
-      const response = await axios.post(VITE_API_UPLOAD_URL, formData, {
+      const response = await axios.post(`VITE_API_UPLOAD_URL/convertLogtoCSV/`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
         responseType: "blob",
         timeout: 300000, // 5 minutes
