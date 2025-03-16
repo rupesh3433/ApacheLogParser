@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-// Example shadcn UI components (adjust import paths as per your project structure)
+// Example shadcn UI components (adjust import paths as needed)
 import {
   Card,
   CardContent,
@@ -35,7 +35,6 @@ function ApacheLogParser() {
 
   // File input ref for programmatically opening file dialog
   const fileInputRef = useRef(null);
-
   // React Router navigation hook
   const navigate = useNavigate();
 
@@ -53,9 +52,7 @@ function ApacheLogParser() {
   }, [downloadLink]);
 
   // Validate file extension (.log)
-  const isValidFileType = (file) => {
-    return file.name.toLowerCase().endsWith(".log");
-  };
+  const isValidFileType = (file) => file.name.toLowerCase().endsWith(".log");
 
   const handleFileChange = (event) => {
     const selectedFile = event.target.files[0];
@@ -111,39 +108,26 @@ function ApacheLogParser() {
     setIsDragging(false);
   };
 
-  // Helper: delay function
-  const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-  const uploadFileWithRetry = async (formData, retries = 3, delayTime = 1000) => {
+  // Single attempt to upload file (no retries)
+  const uploadFile = async (formData) => {
     try {
-      const response = await axios.post(
-        `${VITE_API_UPLOAD_URL}`,
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-          responseType: "blob",
-          timeout: 300000, // 5 minutes
-          maxContentLength: Infinity,
-          maxBodyLength: Infinity,
-          onUploadProgress: (progressEvent) => {
-            console.log(
-              `Upload Progress: ${Math.round(
-                (progressEvent.loaded / progressEvent.total) * 100
-              )}%`
-            );
-          },
-        }
-      );      
+      const response = await axios.post(VITE_API_UPLOAD_URL, formData, {
+        responseType: "blob",
+        timeout: 300000, // 5 minutes
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
+        onUploadProgress: (progressEvent) => {
+          console.log(
+            `Upload Progress: ${Math.round(
+              (progressEvent.loaded / progressEvent.total) * 100
+            )}%`
+          );
+        },
+      });
       return response;
     } catch (err) {
-      if (retries > 0) {
-        console.log(`Retrying... (${retries} attempts left)`);
-        await delay(delayTime);
-        return await uploadFileWithRetry(formData, retries - 1, delayTime * 2);
-      } else {
-        console.error("Upload failed after multiple retries:", err);
-        throw err;
-      }
+      console.error("Upload failed:", err);
+      throw err;
     }
   };
 
@@ -153,16 +137,14 @@ function ApacheLogParser() {
       console.log("No file selected");
       return;
     }
-
     setError("");
     setIsLoading(true);
     setUploadSuccess(false);
-
     const formData = new FormData();
     formData.append("file", file);
 
     try {
-      const response = await uploadFileWithRetry(formData);
+      const response = await uploadFile(formData);
       // Create a temporary URL for the CSV blob response
       const blobUrl = window.URL.createObjectURL(
         new Blob([response.data], { type: "text/csv" })
@@ -201,7 +183,7 @@ function ApacheLogParser() {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
-      {/* Header with Return Button at top right */}
+      {/* Header */}
       <header className="bg-gradient-to-r from-blue-700 to-indigo-800 text-white py-6 md:py-10 shadow-lg">
         <div className="container mx-auto px-4 flex justify-between items-center">
           <div>
@@ -221,21 +203,14 @@ function ApacheLogParser() {
       {/* Main Container */}
       <div className="container mx-auto px-4 flex-1 my-8 w-full">
         <div className="max-w-5xl mx-auto">
-          <Tabs
-            defaultValue="upload"
-            value={activeTab}
-            onValueChange={setActiveTab}
-            className="mb-8"
-          >
+          <Tabs defaultValue="upload" value={activeTab} onValueChange={setActiveTab} className="mb-8">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="format">Format Info</TabsTrigger>
               <TabsTrigger value="upload">Upload Log</TabsTrigger>
-              <TabsTrigger value="download" disabled={!downloadLink}>
-                Download CSV
-              </TabsTrigger>
+              <TabsTrigger value="download" disabled={!downloadLink}>Download CSV</TabsTrigger>
             </TabsList>
 
-            {/* Format Information Tab */}
+            {/* Format Info Tab */}
             <TabsContent value="format" className="space-y-6">
               <Card>
                 <CardHeader>
@@ -257,48 +232,6 @@ function ApacheLogParser() {
                         127.0.0.1 - - [10/Oct/2000:13:55:36 -0700] "GET /apache_pb.gif HTTP/1.0" 200 2326 "http://example.com/start.html" "Mozilla/4.08 [en] (Win98; I; Nav)"
                       </code>
                     </pre>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-2xl">
-                    <FileText size={20} className="text-blue-600" />
-                    Output CSV Format
-                  </CardTitle>
-                  <CardDescription>
-                    The processed CSV file will contain these columns.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full border border-slate-200 rounded-lg">
-                      <thead className="bg-slate-100">
-                        <tr>
-                          <th className="px-4 py-2 border border-slate-200 text-left">ip</th>
-                          <th className="px-4 py-2 border border-slate-200 text-left">timestamp</th>
-                          <th className="px-4 py-2 border border-slate-200 text-left">method</th>
-                          <th className="px-4 py-2 border border-slate-200 text-left">url</th>
-                          <th className="px-4 py-2 border border-slate-200 text-left">status</th>
-                          <th className="px-4 py-2 border border-slate-200 text-left">size</th>
-                          <th className="px-4 py-2 border border-slate-200 text-left">referrer</th>
-                          <th className="px-4 py-2 border border-slate-200 text-left">user_agent</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td className="px-4 py-2 border border-slate-200">127.0.0.1</td>
-                          <td className="px-4 py-2 border border-slate-200">2000-10-10 13:55:36</td>
-                          <td className="px-4 py-2 border border-slate-200">GET</td>
-                          <td className="px-4 py-2 border border-slate-200">/apache_pb.gif</td>
-                          <td className="px-4 py-2 border border-slate-200">200</td>
-                          <td className="px-4 py-2 border border-slate-200">2326</td>
-                          <td className="px-4 py-2 border border-slate-200">http://example.com/start.html</td>
-                          <td className="px-4 py-2 border border-slate-200">Mozilla/4.08 [en] (Win98; I; Nav)</td>
-                        </tr>
-                      </tbody>
-                    </table>
                   </div>
                 </CardContent>
               </Card>
@@ -354,7 +287,6 @@ function ApacheLogParser() {
                       <div className="w-full">
                         {/* Hidden File Input */}
                         <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
-
                         {/* Mobile layout: vertical stack */}
                         <div className="md:hidden flex flex-col gap-3">
                           <Button variant="outline" className="w-full" onClick={openFileDialog}>
@@ -367,8 +299,7 @@ function ApacheLogParser() {
                             Clear File
                           </Button>
                         </div>
-
-                        {/* Medium and larger screens: grid with 2 rows and 2 columns */}
+                        {/* Medium and larger screens: grid layout */}
                         <div className="hidden md:grid grid-cols-2 grid-rows-2 gap-3">
                           <Button variant="outline" className="col-span-2" onClick={openFileDialog}>
                             Select File
@@ -414,7 +345,7 @@ function ApacheLogParser() {
                       <a
                         href={downloadLink}
                         className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-all shadow-md hover:shadow-lg"
-                        download
+                        download="parsed.csv"
                       >
                         <ArrowDownToLine size={18} />
                         Download CSV File
@@ -434,7 +365,7 @@ function ApacheLogParser() {
         </div>
       </div>
 
-      {/* Footer with Return Button at bottom left */}
+      {/* Footer */}
       <footer className="mt-auto bg-slate-800 text-slate-300 py-6 px-4">
         <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
           <Button variant="outline" onClick={handleReturnToDashboard} className="mb-4 md:mb-0">
