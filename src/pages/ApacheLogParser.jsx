@@ -116,9 +116,8 @@ function ApacheLogParser() {
 
   const uploadFileWithRetry = async (formData, retries = 3, delayTime = 1000) => {
     try {
-      // Append the correct endpoint, e.g. `/convertLogtoCSV/`
       const response = await axios.post(
-        `${VITE_API_UPLOAD_URL}/convertLogtoCSV/`,
+        `${VITE_API_UPLOAD_URL}`,
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
@@ -126,7 +125,6 @@ function ApacheLogParser() {
           timeout: 300000, // 5 minutes
           maxContentLength: Infinity,
           maxBodyLength: Infinity,
-          withCredentials: true, // Include credentials if needed
           onUploadProgress: (progressEvent) => {
             console.log(
               `Upload Progress: ${Math.round(
@@ -135,7 +133,7 @@ function ApacheLogParser() {
             );
           },
         }
-      );
+      );      
       return response;
     } catch (err) {
       if (retries > 0) {

@@ -14,6 +14,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Download, FileText, Info, CheckCircle, AlertCircle } from "lucide-react";
 
+
 function ApacheLogGenerator() {
   const [totalRows, setTotalRows] = useState(10000);
   const [maliciousRatio, setMaliciousRatio] = useState(0.5);
@@ -23,14 +24,12 @@ function ApacheLogGenerator() {
   const [generateSuccess, setGenerateSuccess] = useState(false);
   const [activeTab, setActiveTab] = useState("generator");
 
-  // API URL from environment variable with fallback
-  const VITE_API_GENERATE_URL = import.meta.env.VITE_API_GENERATE_URL
-
+  const VITE_API_GENERATE_URL = import.meta.env.VITE_API_GENERATE_URL;
   const navigate = useNavigate();
 
   useEffect(() => {
     console.log("API_GENERATE_URL:", VITE_API_GENERATE_URL);
-  }, [VITE_API_GENERATE_URL]);
+  }, []);
 
   const handleGenerate = async () => {
     setError("");
@@ -38,84 +37,41 @@ function ApacheLogGenerator() {
     setDownloadUrl("");
     setGenerateSuccess(false);
 
-    if (totalRows <= 0) {
-      setError("Total entries must be greater than zero.");
-      setGenerating(false);
-      return;
-    }
-    if (maliciousRatio < 0 || maliciousRatio > 1) {
-      setError("Malicious ratio must be between 0 and 1.");
+    if (totalRows <= 0 || maliciousRatio < 0 || maliciousRatio > 1) {
+      setError("Invalid input: Ensure total entries > 0 and malicious ratio is between 0 and 1.");
       setGenerating(false);
       return;
     }
 
-    // For large files (> 100,000 rows), use dynamic form submission
-    if (totalRows > 100000) {
-      const form = document.createElement("form");
-      form.method = "POST";
-      form.action = VITE_API_GENERATE_URL;
-      form.enctype = "application/x-www-form-urlencoded";
-      form.target = "_blank"; // Open in a new tab to force download
-
-      const inputTotal = document.createElement("input");
-      inputTotal.type = "hidden";
-      inputTotal.name = "total_entries";
-      inputTotal.value = totalRows;
-      form.appendChild(inputTotal);
-
-      const inputRatio = document.createElement("input");
-      inputRatio.type = "hidden";
-      inputRatio.name = "malicious_ratio";
-      inputRatio.value = maliciousRatio;
-      form.appendChild(inputRatio);
-
-      document.body.appendChild(form);
-      form.submit();
-      document.body.removeChild(form);
-      setGenerateSuccess(true);
-      setActiveTab("download");
-      setGenerating(false);
-      return;
-    }
-
-    // Otherwise, use fetch for smaller files
     try {
       const response = await fetch(VITE_API_GENERATE_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          total_entries: totalRows,
-          malicious_ratio: maliciousRatio,
-        }),
+        body: JSON.stringify({ total_entries: totalRows, malicious_ratio: maliciousRatio }),
       });
       
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        setDownloadUrl(url);
-        setGenerateSuccess(true);
-        setActiveTab("download");
-      } else {
-        const errorData = await response.json();
-        setError(errorData.message || "Failed to generate logs. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error generating logs:", error);
-      setError("Error connecting to the server. Please check your connection and try again.");
+      if (!response.ok) throw new Error("Failed to generate logs");
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      setDownloadUrl(url);
+      setGenerateSuccess(true);
+      setActiveTab("download");
+    } catch (err) {
+      setError("Error: Unable to connect to server.");
     } finally {
       setGenerating(false);
     }
   };
 
   const handleDownload = () => {
-    if (downloadUrl) {
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = `generated_log_${totalRows}_${maliciousRatio}.log`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
+    if (!downloadUrl) return;
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.download = `generated_log_${totalRows}_${maliciousRatio}.log`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
