@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
-import axios from "axios";
+// Removed axios import since we use fetch now
 import { useNavigate } from "react-router-dom";
 
-// Example shadcn UI components (adjust import paths as needed)
 import {
   Card,
   CardContent,
@@ -108,29 +107,7 @@ function ApacheLogParser() {
     setIsDragging(false);
   };
 
-  // Single attempt to upload file (no retries)
-  const uploadFile = async (formData) => {
-    try {
-      const response = await axios.post(VITE_API_UPLOAD_URL, formData, {
-        responseType: "blob",
-        timeout: 300000, // 5 minutes
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity,
-        onUploadProgress: (progressEvent) => {
-          console.log(
-            `Upload Progress: ${Math.round(
-              (progressEvent.loaded / progressEvent.total) * 100
-            )}%`
-          );
-        },
-      });
-      return response;
-    } catch (err) {
-      console.error("Upload failed:", err);
-      throw err;
-    }
-  };
-
+  // Upload using fetch with streaming response handling
   const handleUpload = async () => {
     if (!file) {
       setError("Please select a .log file");
@@ -144,20 +121,41 @@ function ApacheLogParser() {
     formData.append("file", file);
 
     try {
-      const response = await uploadFile(formData);
-      // Create a temporary URL for the CSV blob response
-      const blobUrl = window.URL.createObjectURL(
-        new Blob([response.data], { type: "text/csv" })
-      );
+      const response = await fetch(VITE_API_UPLOAD_URL, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errMsg = await response.text();
+        setError(errMsg || "Error processing file.");
+        setIsLoading(false);
+        return;
+      }
+
+      // Read the response stream in chunks
+      const reader = response.body.getReader();
+      const chunks = [];
+      let receivedLength = 0;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        receivedLength += value.length;
+        console.log(`Received ${receivedLength} bytes`);
+      }
+
+      // Combine chunks into one Blob and create a URL for download
+      const blob = new Blob(chunks, { type: "text/csv" });
+      const blobUrl = window.URL.createObjectURL(blob);
       setDownloadLink(blobUrl);
       setUploadSuccess(true);
       setActiveTab("download");
     } catch (err) {
       console.error("Error uploading file:", err);
       setError(
-        err.response?.data?.message ||
-          err.message ||
-          "Error uploading file or processing data."
+        err.message || "Error uploading file or processing data."
       );
     } finally {
       setIsLoading(false);
@@ -352,7 +350,14 @@ function ApacheLogParser() {
                       </a>
                       <p className="text-sm text-slate-500 mt-4">
                         Need to process another file?{" "}
-                        <Button variant="link" className="p-0 h-auto font-normal" onClick={() => { setActiveTab("upload"); clearFile(); }}>
+                        <Button
+                          variant="link"
+                          className="p-0 h-auto font-normal"
+                          onClick={() => {
+                            setActiveTab("upload");
+                            clearFile();
+                          }}
+                        >
                           Go back to upload
                         </Button>
                       </p>
